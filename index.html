@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <title>File Uploader</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css"
+        integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="jumbotron text-center">
+        <h1>File Uploader</h1>
+    </div>
+    <div class="container">
+        <div class="row">
+            <form>
+                <div>
+                    <div class="input-group">
+                        <span class="input-group-addon">URL</span>
+                        <input type="text" id="sasUrl" class="form-control" value="upload.php/upload" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input">File To Upload</span>
+                        <input type="file" id="file" class="form-control" name="file" />
+                    </div>
+                    <div id="progressContent">
+
+                        <strong>File Properties:</strong>
+                        <br />
+                        <p>
+                            Name: <span id="fileName"></span>
+                        </p>
+                        <p>
+                            File Size: <span id="fileSize"></span> bytes.
+                        </p>
+                        <p>
+                            File Type: <span id="fileType"></span>
+                        </p>
+                        <input id="uploadFile" type="button" class="btn btn-success" value="Upload File" />
+                        <div id="progress" class="progress">
+                            <div id="progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                   
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+    <script src="uploadFile.js"></script>
+    <script src="main.js"></script>
+    <script>
+        var UploadAzure = new CUploadBlob();
+        $(document).ready(function () {
+            $("#progressContent").hide();
+            $("#file").bind('change', handleFileSelect);
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                // Great success! All the File APIs are supported.
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+        });
+        //Read the file and find out how many blocks we would need to split it.
+        function handleFileSelect(e) {
+            var baseUrl = $("#sasUrl").val();
+            var file = e.target.files[0];
+            $("#progressContent").show();
+            upload(baseUrl, file);
+        }
+        function upload(urlAzure, fls) {
+            console.log(fls)
+            UploadAzure.blockIdPrefix = 'File' + fls.name;
+            UploadAzure.addData({ 'dir': getDir() });
+            UploadAzure.uploadFile(urlAzure, fls);
+            fileName.innerHTML = fls.name;
+            fileSize.innerHTML = fls.size;
+            fileType.innerHTML = fls.type;
+            UploadAzure.successBlob = function (percentComplete, status) {
+                console.log(percentComplete);
+                uploadProgress(percentComplete)
+            }
+            UploadAzure.errorBlob = function (xhr, desc, err) {
+                console.log(desc);
+                console.log(err);
+            }
+            UploadAzure.successBlobList = function (data, status) {
+                console.log("successBlobList");
+            }
+            UploadAzure.errorBlobList = function (xhr, desc, err) {
+                console.log(desc);
+                console.log(err);
+            }
+
+        }
+        $("#uploadFile").on('click', function(e){
+            UploadAzure.upload();
+        });
+
+        function uploadProgress(percentComplete) {
+            percentComplete = parseFloat(percentComplete);
+            var containerProgress = document.getElementById('progress')
+            var elem = document.getElementById("progress-bar");
+            if (percentComplete >= 100) {
+                elem.style.width = percentComplete + '%';
+                elem.innerHTML = percentComplete.toFixed(2) + '%'
+            } else {
+                elem.style.width = percentComplete + '%';
+                elem.innerHTML = percentComplete.toFixed(2) + '%'
+            }
+        }
+    </script>
+</body>
+
+</html>
